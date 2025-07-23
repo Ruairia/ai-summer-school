@@ -1,168 +1,129 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Chatbot - Design Mockup</title>
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Chatbot</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-    <div class="container">
-        <!-- Sidebar -->
-        <div class="sidebar">
-            <button class="new-chat-btn">+ New Chat</button>
-
-            <div class="chat-history">
-                <div class="chat-item active">✨ Getting Started</div>
-                <div class="chat-item">💡 Creative Writing Help</div>
-                <div class="chat-item">🔧 Code Review Session</div>
-                <div class="chat-item">📚 Learning JavaScript</div>
-                <div class="chat-item">🎨 Design Inspiration</div>
-                <div class="chat-item">🌟 Project Planning</div>
-                <div class="chat-item">💼 Business Strategy</div>
-                <div class="chat-item">🚀 Marketing Ideas</div>
-            </div>
-
-            <div class="sidebar-footer">
-                <div class="user-profile">
-                    <div class="avatar">U</div>
-                    <span>User Profile</span>
-                </div>
-            </div>
+  <div class="container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <button class="new-chat-btn">+ New Chat</button>
+      <div class="chat-history">
+        <div class="chat-item active">✨ Getting Started</div>
+      </div>
+      <div class="sidebar-footer">
+        <div class="user-profile">
+          <div class="avatar">U</div>
+          <span>User Profile</span>
         </div>
-
-        <!-- Main Content -->
-        <div class="main-content">
-            <div class="chat-header">
-                <div class="model-selector">
-                    ChatGPT 4.0 ▼
-                </div>
-            </div>
-
-            <div class="chat-messages">
-                <div class="welcome-screen">
-                    <h1 class="welcome-title">How can I help you today?</h1>
-                    <p class="welcome-subtitle">Ask me anything, and I'll do my best to assist you</p>
-
-                    <div class="suggestion-cards">
-                        <div class="suggestion-card">
-                            <div class="suggestion-title">💡 Creative Writing</div>
-                            <div class="suggestion-text">Help me write a compelling story or improve my writing style</div>
-                        </div>
-                        <div class="suggestion-card">
-                            <div class="suggestion-title">🔧 Code Solutions</div>
-                            <div class="suggestion-text">Debug my code or explain programming concepts</div>
-                        </div>
-                        <div class="suggestion-card">
-                            <div class="suggestion-title">📊 Data Analysis</div>
-                            <div class="suggestion-text">Analyze data and create visualizations or insights</div>
-                        </div>
-                        <div class="suggestion-card">
-                            <div class="suggestion-title">🎨 Design Ideas</div>
-                            <div class="suggestion-text">Generate creative concepts and design inspiration</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="input-container">
-                <div class="input-wrapper">
-                    <textarea
-                        class="message-input"
-                        placeholder="Send a message..."
-                        rows="1"
-                    ></textarea>
-                    <button class="send-button">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-        </div>
+      </div>
     </div>
 
-    <script>
-        // Basic interactivity for demonstration
-        const messageInput = document.querySelector('.message-input');
-        const sendButton = document.querySelector('.send-button');
-        const chatMessages = document.querySelector('.chat-messages');
-        const welcomeScreen = document.querySelector('.welcome-screen');
+    <!-- Main Chat Interface -->
+    <div class="main-content">
+      <div class="chat-header">
+        <div class="model-selector">ChatGPT 4.0 ▼</div>
+      </div>
 
-        // Auto-resize textarea
-        messageInput.addEventListener('input', function() {
-            this.style.height = 'auto';
-            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+      <div class="chat-messages" id="chat-messages">
+        <div class="welcome-screen" id="welcome-screen">
+          <h1 class="welcome-title">How can I help you today?</h1>
+          <p class="welcome-subtitle">Ask me anything, and I'll do my best to assist you</p>
+        </div>
+      </div>
 
-            // Enable/disable send button
-            sendButton.disabled = !this.value.trim();
-        });
+      <!-- Input Area -->
+      <div class="input-container">
+        <div class="input-wrapper">
+          <textarea
+            class="message-input"
+            placeholder="Send a message..."
+            rows="1"
+          ></textarea>
+          <button class="send-button" disabled>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-        // Send message on Enter (Shift+Enter for new line)
-        messageInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-            }
-        });
+  <!-- Script -->
+  <script>
+    const messageInput = document.querySelector('.message-input');
+    const sendButton = document.querySelector('.send-button');
+    const chatMessages = document.getElementById('chat-messages');
+    const welcomeScreen = document.getElementById('welcome-screen');
 
-        sendButton.addEventListener('click', sendMessage);
+    messageInput.addEventListener('input', function () {
+      this.style.height = 'auto';
+      this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+      sendButton.disabled = !this.value.trim();
+    });
 
-        function sendMessage() {
-            const message = messageInput.value.trim();
-            if (!message) return;
+    messageInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
 
-            // Hide welcome screen
-            if (welcomeScreen) {
-                welcomeScreen.style.display = 'none';
-            }
+    sendButton.addEventListener('click', sendMessage);
 
-            // Add user message
-            addMessage(message, 'user');
+    function sendMessage() {
+      const message = messageInput.value.trim();
+      if (!message) return;
 
-            // Clear input
-            messageInput.value = '';
-            messageInput.style.height = 'auto';
-            sendButton.disabled = true;
+      if (welcomeScreen) {
+        welcomeScreen.style.display = 'none';
+      }
 
-            // Simulate bot response
-            setTimeout(() => {
-                addMessage("I'm a design mockup, so I can't actually respond yet! But your message interface is working perfectly. This is how your chatbot will display conversations.", 'bot');
-            }, 1000);
+      addMessage(message, 'user');
+
+      messageInput.value = '';
+      messageInput.style.height = 'auto';
+      sendButton.disabled = true;
+
+      // 🔗 Send message to Flask backend
+      fetch("http://localhost:5000/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          subject: "A-level Computer Science",
+          exam_board: "AQA",
+          question: message
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.answer) {
+          addMessage(data.answer, 'bot');
+        } else {
+          addMessage("⚠️ Error: " + (data.error || "Unknown issue."), 'bot');
         }
+      })
+      .catch(err => {
+        addMessage("❌ Connection error: " + err.message, 'bot');
+      });
+    }
 
-        function addMessage(text, sender) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${sender}-message`;
-
-            messageDiv.innerHTML = `
-                <div class="message-avatar">${sender === 'user' ? 'U' : 'AI'}</div>
-                <div class="message-content">
-                    <div class="message-text">${text}</div>
-                </div>
-            `;
-
-            chatMessages.appendChild(messageDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-
-        // Suggestion card clicks
-        document.querySelectorAll('.suggestion-card').forEach(card => {
-            card.addEventListener('click', function() {
-                const title = this.querySelector('.suggestion-title').textContent;
-                messageInput.value = `Tell me more about: ${title}`;
-                messageInput.focus();
-                sendButton.disabled = false;
-            });
-        });
-
-        // Chat history clicks
-        document.querySelectorAll('.chat-item').forEach(item => {
-            item.addEventListener('click', function() {
-                document.querySelectorAll('.chat-item').forEach(i => i.classList.remove('active'));
-                this.classList.add('active');
-            });
-        });
-    </script>
+    function addMessage(text, sender) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message ${sender}-message`;
+      messageDiv.innerHTML = `
+        <div class="message-avatar">${sender === 'user' ? 'U' : 'AI'}</div>
+        <div class="message-content">
+          <div class="message-text">${text}</div>
+        </div>
+      `;
+      chatMessages.appendChild(messageDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+  </script>
 </body>
 </html>
