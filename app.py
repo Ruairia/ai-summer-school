@@ -8,6 +8,7 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 
 app = Flask(__name__)
 
+
 @app.route("/ask", methods=["POST"])
 def ask():
     data = request.get_json()
@@ -20,12 +21,12 @@ def ask():
 
     system_prompt = (
         f"You are an expert tutor. The student is studying {subject} "
-        f"for the {exam_board} exam board. Give answers specific to this curriculum."
+        f"for the {exam_board} exam board for the British A Level. Give answers specific to this curriculum."
     )
 
     try:
         response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",  # or "gpt-4o" if you're using free credits
+            model="gpt-4o",  # or "gpt-4o" if you're using free credits
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": question}
@@ -35,6 +36,12 @@ def ask():
         return jsonify({"answer": answer})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@app.route("/")
+def home():
+    return "Flask server is running. Use POST /ask to query ChatGPT."
+
 
 if __name__ == "__main__":
     app.run(debug=True)
