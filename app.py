@@ -1,13 +1,14 @@
 import os
 from flask import Flask, request, jsonify
+from flask_cors import CORS  # For frontend to connect
 from dotenv import load_dotenv
-import openai
+from openai import OpenAI
 
 load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 app = Flask(__name__)
-
+CORS(app)  # Allow requests from browser
 
 @app.route("/ask", methods=["POST"])
 def ask():
@@ -25,23 +26,21 @@ def ask():
     )
 
     try:
-        response = openai.ChatCompletion.create(
-            model="gpt-4o",  # or "gpt-4o" if you're using free credits
+        response = client.chat.completions.create(
+            model="gpt-4o",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": question}
             ]
         )
-        answer = response['choices'][0]['message']['content']
+        answer = response.choices[0].message.content
         return jsonify({"answer": answer})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 @app.route("/")
 def home():
     return "Flask server is running. Use POST /ask to query ChatGPT."
 
-
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, port=8000)

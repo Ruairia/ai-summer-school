@@ -22,28 +22,21 @@
       </div>
     </div>
 
-    <!-- Main Chat Interface -->
+    <!-- Main Content -->
     <div class="main-content">
       <div class="chat-header">
         <div class="model-selector">ChatGPT 4.0 ▼</div>
       </div>
-
-      <div class="chat-messages" id="chat-messages">
-        <div class="welcome-screen" id="welcome-screen">
+      <div class="chat-messages">
+        <div class="welcome-screen">
           <h1 class="welcome-title">How can I help you today?</h1>
           <p class="welcome-subtitle">Ask me anything, and I'll do my best to assist you</p>
         </div>
       </div>
-
-      <!-- Input Area -->
       <div class="input-container">
         <div class="input-wrapper">
-          <textarea
-            class="message-input"
-            placeholder="Send a message..."
-            rows="1"
-          ></textarea>
-          <button class="send-button" disabled>
+          <textarea class="message-input" placeholder="Send a message..." rows="1"></textarea>
+          <button class="send-button">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
               <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
             </svg>
@@ -53,12 +46,11 @@
     </div>
   </div>
 
-  <!-- Script -->
   <script>
     const messageInput = document.querySelector('.message-input');
     const sendButton = document.querySelector('.send-button');
-    const chatMessages = document.getElementById('chat-messages');
-    const welcomeScreen = document.getElementById('welcome-screen');
+    const chatMessages = document.querySelector('.chat-messages');
+    const welcomeScreen = document.querySelector('.welcome-screen');
 
     messageInput.addEventListener('input', function () {
       this.style.height = 'auto';
@@ -89,27 +81,28 @@
       messageInput.style.height = 'auto';
       sendButton.disabled = true;
 
-      // 🔗 Send message to Flask backend
-      fetch("http://localhost:5000/ask", {
+      fetch("http://localhost:8000/ask", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json"
+        },
         body: JSON.stringify({
-          subject: "A-level Computer Science",
+          subject: "Computer Science",
           exam_board: "AQA",
           question: message
         })
       })
-      .then(response => response.json())
-      .then(data => {
-        if (data.answer) {
-          addMessage(data.answer, 'bot');
-        } else {
-          addMessage("⚠️ Error: " + (data.error || "Unknown issue."), 'bot');
-        }
-      })
-      .catch(err => {
-        addMessage("❌ Connection error: " + err.message, 'bot');
-      });
+        .then(res => res.json())
+        .then(data => {
+          if (data.answer) {
+            addMessage(data.answer, 'bot');
+          } else {
+            addMessage("⚠️ Error: " + (data.error || "No response."), 'bot');
+          }
+        })
+        .catch(err => {
+          addMessage("⚠️ Network error: " + err.message, 'bot');
+        });
     }
 
     function addMessage(text, sender) {
