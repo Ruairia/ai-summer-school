@@ -3,24 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Chatbot - Design Mockup</title>
+    <title>AI Chatbot - A-Level Computer Science</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
         <!-- Sidebar -->
         <div class="sidebar">
-            <button class="new-chat-btn">+ New Chat</button>
+            <button class="new-chat-btn" onclick="createNewChat()">+ New Chat</button>
 
-            <div class="chat-history">
-                <div class="chat-item active">✨ Getting Started</div>
-                <div class="chat-item">💡 Creative Writing Help</div>
-                <div class="chat-item">🔧 Code Review Session</div>
-                <div class="chat-item">📚 Learning JavaScript</div>
-                <div class="chat-item">🎨 Design Inspiration</div>
-                <div class="chat-item">🌟 Project Planning</div>
-                <div class="chat-item">💼 Business Strategy</div>
-                <div class="chat-item">🚀 Marketing Ideas</div>
+            <div class="chat-history" id="chatHistory">
+                {% for chat in chats %}
+                <div class="chat-item {% if loop.first %}active{% endif %}" 
+                     onclick="loadChat('{{ chat.id }}')" 
+                     data-chat-id="{{ chat.id }}">
+                    💬 {{ chat.title }}
+                </div>
+                {% endfor %}
+                
+                {% if not chats %}
+                <!-- Default chat items when no chats exist -->
+                <div class="chat-item active" onclick="createNewChat()">
+                    ✨ Getting Started
+                </div>
+                <div class="chat-item" onclick="createNewChat()">
+                    💡 AQA Computer Science
+                </div>
+                <div class="chat-item" onclick="createNewChat()">
+                    🔧 OCR Computer Science
+                </div>
+                {% endif %}
             </div>
 
             <div class="sidebar-footer">
@@ -39,27 +51,27 @@
                 </div>
             </div>
 
-            <div class="chat-messages">
-                <div class="welcome-screen">
+            <div class="chat-messages" id="chatMessages">
+                <div class="welcome-screen" id="welcomeScreen">
                     <h1 class="welcome-title">How can I help you today?</h1>
-                    <p class="welcome-subtitle">Ask me anything, and I'll do my best to assist you</p>
+                    <p class="welcome-subtitle">Ask me anything about A-Level Computer Science, and I'll do my best to assist you</p>
 
                     <div class="suggestion-cards">
-                        <div class="suggestion-card">
-                            <div class="suggestion-title">💡 Creative Writing</div>
-                            <div class="suggestion-text">Help me write a compelling story or improve my writing style</div>
+                        <div class="suggestion-card" onclick="fillMessage('Create flash cards for me about...')">
+                            <div class="suggestion-title">💡Flash Cards</div>
+                            <div class="suggestion-text">Create flash cards for me about...</div>
                         </div>
-                        <div class="suggestion-card">
+                        <div class="suggestion-card" onclick="fillMessage('Debug my code or explain programming concepts')">
                             <div class="suggestion-title">🔧 Code Solutions</div>
                             <div class="suggestion-text">Debug my code or explain programming concepts</div>
                         </div>
-                        <div class="suggestion-card">
-                            <div class="suggestion-title">📊 Data Analysis</div>
-                            <div class="suggestion-text">Analyze data and create visualizations or insights</div>
+                        <div class="suggestion-card" onclick="fillMessage('Generate Exam Style Questions for...')">
+                            <div class="suggestion-title">📊 Exam Style Questions</div>
+                            <div class="suggestion-text">Generate Exam Style Questions for...</div>
                         </div>
-                        <div class="suggestion-card">
-                            <div class="suggestion-title">🎨 Design Ideas</div>
-                            <div class="suggestion-text">Generate creative concepts and design inspiration</div>
+                        <div class="suggestion-card" onclick="fillMessage('Take a look at my answers and mark it, the question is...')">
+                            <div class="suggestion-title">🎨 Mark Your Answer</div>
+                            <div class="suggestion-text">Take a look at my answers and mark it, the question is...</div>
                         </div>
                     </div>
                 </div>
@@ -69,10 +81,12 @@
                 <div class="input-wrapper">
                     <textarea
                         class="message-input"
+                        id="messageInput"
                         placeholder="Send a message..."
                         rows="1"
+                        onkeydown="handleKeyPress(event)"
                     ></textarea>
-                    <button class="send-button">
+                    <button class="send-button" id="sendButton" onclick="sendMessage()" disabled>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
                         </svg>
@@ -83,85 +97,221 @@
     </div>
 
     <script>
-        // Basic interactivity for demonstration
-        const messageInput = document.querySelector('.message-input');
-        const sendButton = document.querySelector('.send-button');
-        const chatMessages = document.querySelector('.chat-messages');
-        const welcomeScreen = document.querySelector('.welcome-screen');
+        let currentChatId = null;
 
-        // Auto-resize textarea
-        messageInput.addEventListener('input', function() {
-            this.style.height = 'auto';
-            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
-
-            // Enable/disable send button
-            sendButton.disabled = !this.value.trim();
-        });
-
-        // Send message on Enter (Shift+Enter for new line)
-        messageInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
+        // Create new chat
+        async function createNewChat() {
+            try {
+                const response = await fetch('/new-chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Add new chat to sidebar
+                    addChatToSidebar(data.chat);
+                    // Load the new chat
+                    loadChat(data.chat.id);
+                }
+            } catch (error) {
+                console.error('Error creating new chat:', error);
             }
-        });
-
-        sendButton.addEventListener('click', sendMessage);
-
-        function sendMessage() {
-            const message = messageInput.value.trim();
-            if (!message) return;
-
-            // Hide welcome screen
-            if (welcomeScreen) {
-                welcomeScreen.style.display = 'none';
-            }
-
-            // Add user message
-            addMessage(message, 'user');
-
-            // Clear input
-            messageInput.value = '';
-            messageInput.style.height = 'auto';
-            sendButton.disabled = true;
-
-            // Simulate bot response
-            setTimeout(() => {
-                addMessage("I'm a design mockup, so I can't actually respond yet! But your message interface is working perfectly. This is how your chatbot will display conversations.", 'bot');
-            }, 1000);
         }
 
-        function addMessage(text, sender) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${sender}-message`;
+        // Add chat to sidebar DOM
+        function addChatToSidebar(chat) {
+            const chatHistory = document.getElementById('chatHistory');
+            
+            // Remove active class from all items
+            document.querySelectorAll('.chat-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Create new chat item
+            const chatItem = document.createElement('div');
+            chatItem.className = 'chat-item active';
+            chatItem.setAttribute('data-chat-id', chat.id);
+            chatItem.onclick = () => loadChat(chat.id);
+            chatItem.textContent = `💬 ${chat.title}`;
+            
+            // Add to top of list
+            chatHistory.insertBefore(chatItem, chatHistory.firstChild);
+        }
 
+        // Load specific chat
+        async function loadChat(chatId) {
+            try {
+                const response = await fetch(`/chat/${chatId}`);
+                const chat = await response.json();
+                
+                if (chat.error) {
+                    console.error('Chat not found');
+                    return;
+                }
+                
+                currentChatId = chatId;
+                
+                // Update active chat in sidebar
+                document.querySelectorAll('.chat-item').forEach(item => {
+                    item.classList.remove('active');
+                    if (item.getAttribute('data-chat-id') === chatId) {
+                        item.classList.add('active');
+                    }
+                });
+                
+                // Load messages
+                displayMessages(chat.messages);
+                
+            } catch (error) {
+                console.error('Error loading chat:', error);
+            }
+        }
+
+        // Display messages in chat
+        function displayMessages(messages) {
+            const chatMessages = document.getElementById('chatMessages');
+            const welcomeScreen = document.getElementById('welcomeScreen');
+            
+            if (messages.length === 0) {
+                // Show welcome screen
+                welcomeScreen.style.display = 'flex';
+            } else {
+                // Hide welcome screen and show messages
+                welcomeScreen.style.display = 'none';
+                
+                // Clear existing messages (but keep welcome screen)
+                const existingMessages = chatMessages.querySelectorAll('.message');
+                existingMessages.forEach(msg => msg.remove());
+                
+                // Add messages
+                messages.forEach(message => {
+                    addMessageToDOM(message.content, message.type);
+                });
+            }
+        }
+
+        // Send message
+        async function sendMessage() {
+            const messageInput = document.getElementById('messageInput');
+            const message = messageInput.value.trim();
+            
+            if (!message) return;
+            
+            // If no current chat, create one first
+            if (!currentChatId) {
+                await createNewChat();
+                // Wait a moment for the chat to be created
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
+            if (!currentChatId) {
+                console.error('No active chat to send message to');
+                return;
+            }
+            
+            try {
+                // Clear input immediately
+                messageInput.value = '';
+                messageInput.style.height = 'auto';
+                updateSendButton();
+                
+                // Hide welcome screen
+                document.getElementById('welcomeScreen').style.display = 'none';
+                
+                const response = await fetch('/send-message', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        chat_id: currentChatId,
+                        message: message
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Add messages to DOM
+                    data.messages.forEach(msg => {
+                        addMessageToDOM(msg.content, msg.type);
+                    });
+                }
+                
+            } catch (error) {
+                console.error('Error sending message:', error);
+            }
+        }
+
+        // Add message to DOM
+        function addMessageToDOM(content, type) {
+            const chatMessages = document.getElementById('chatMessages');
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}-message`;
+            
             messageDiv.innerHTML = `
-                <div class="message-avatar">${sender === 'user' ? 'U' : 'AI'}</div>
+                <div class="message-avatar">${type === 'user' ? 'U' : 'AI'}</div>
                 <div class="message-content">
-                    <div class="message-text">${text}</div>
+                    <div class="message-text">${content}</div>
                 </div>
             `;
-
+            
             chatMessages.appendChild(messageDiv);
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
-        // Suggestion card clicks
-        document.querySelectorAll('.suggestion-card').forEach(card => {
-            card.addEventListener('click', function() {
-                const title = this.querySelector('.suggestion-title').textContent;
-                messageInput.value = `Tell me more about: ${title}`;
-                messageInput.focus();
-                sendButton.disabled = false;
-            });
-        });
+        // Handle input events
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+            
+            // Auto-resize textarea
+            const input = event.target;
+            input.style.height = 'auto';
+            input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+            
+            updateSendButton();
+        }
 
-        // Chat history clicks
-        document.querySelectorAll('.chat-item').forEach(item => {
-            item.addEventListener('click', function() {
-                document.querySelectorAll('.chat-item').forEach(i => i.classList.remove('active'));
-                this.classList.add('active');
+        function updateSendButton() {
+            const messageInput = document.getElementById('messageInput');
+            const sendButton = document.getElementById('sendButton');
+            sendButton.disabled = !messageInput.value.trim();
+        }
+
+        function fillMessage(text) {
+            const messageInput = document.getElementById('messageInput');
+            messageInput.value = text;
+            messageInput.focus();
+            updateSendButton();
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            const messageInput = document.getElementById('messageInput');
+            
+            // Add input event listener for real-time updates
+            messageInput.addEventListener('input', function() {
+                // Auto-resize textarea
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+                
+                updateSendButton();
             });
+            
+            // If there are existing chats, load the first one
+            const firstChat = document.querySelector('.chat-item[data-chat-id]');
+            if (firstChat) {
+                const chatId = firstChat.getAttribute('data-chat-id');
+                loadChat(chatId);
+            }
         });
     </script>
 </body>
