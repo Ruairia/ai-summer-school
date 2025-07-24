@@ -1,14 +1,22 @@
 import os
+import requests
 from flask import Flask, request, jsonify
-from flask_cors import CORS  # For frontend to connect
+from flask_cors import CORS
 from dotenv import load_dotenv
-from openai import OpenAI
 
 load_dotenv()
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+HF_API_KEY = os.getenv("HUGGINGFACE_API_KEY")
 
 app = Flask(__name__)
-CORS(app)  # Allow requests from browser
+CORS(app)
+
+MODEL_URL = "https://api-inference.huggingface.co/models/gpt2"
+
+
+headers = {
+    "Authorization": f"Bearer {HF_API_KEY}",
+    "Content-Type": "application/json"
+}
 
 @app.route("/ask", methods=["POST"])
 def ask():
@@ -20,27 +28,34 @@ def ask():
     if not all([subject, exam_board, question]):
         return jsonify({"error": "Missing subject, exam_board, or question"}), 400
 
-    system_prompt = (
-        f"You are an expert tutor. The student is studying {subject} "
-        f"for the {exam_board} exam board for the British A Level. Give answers specific to this curriculum."
+    prompt = (
+        f"You are an expert tutor. The student is studying {subject} for the {exam_board} A-level. "
+        f"Answer clearly and concisely according to this curriculum.\n\n"
+        f"Student: {question}"
     )
 
     try:
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": question}
-            ]
+        response = requests.post(
+            MODEL_URL,
+            headers=headers,
+            json={"inputs": prompt}
         )
-        answer = response.choices[0].message.content
-        return jsonify({"answer": answer})
+
+        if response.status_code != 200:
+            return jsonify({"error": f"Hugging Face error: {response.text}"}), response.status_code
+
+        output = response.json()
+        if isinstance(output, list) and "generated_text" in output[0]:
+            return jsonify({"answer": output[0]["generated_text"]})
+        else:
+            return jsonify({"error": "Unexpected response format", "raw": output}), 500
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 @app.route("/")
 def home():
-    return "Flask server is running. Use POST /ask to query ChatGPT."
+    return "Flask server with Hugging Face model running. POST to /ask."
 
 if __name__ == "__main__":
     app.run(debug=True, port=8000)
