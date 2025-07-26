@@ -159,10 +159,28 @@ function addMessage(text, sender, save = true) {
     messageDiv.innerHTML = `
         <div class="message-avatar">${sender === 'user' ? 'U' : 'AI'}</div>
         <div class="message-content">
-            <div class="message-text">${text}</div>
+            <div class="message-text"></div>
         </div>
     `;
     chatMessages.appendChild(messageDiv);
+    
+    if (sender === 'bot') {
+        const messageText = messageDiv.querySelector('.message-text');
+        let index = 0;
+        // Adjust the speed by changing the interval (currently 10ms)
+        const interval = setInterval(() => {
+            if (index < text.length) {
+                messageText.textContent += text[index];
+                index++;
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            } else {
+                clearInterval(interval);
+            }
+        }, 10);
+    } else {
+        messageDiv.querySelector('.message-text').textContent = text;
+    }
+    
     chatMessages.scrollTop = chatMessages.scrollHeight;
 
     if (save) {
@@ -170,7 +188,6 @@ function addMessage(text, sender, save = true) {
         if (currentChat) {
             currentChat.messages.push({ text, sender });
             if (currentChat.messages.length === 2) {
-                // Update chat title after first exchange
                 currentChat.title = text.slice(0, 30) + (text.length > 30 ? '...' : '');
                 updateChatHistory();
             }
