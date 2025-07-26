@@ -35,10 +35,12 @@
       </div>
       <div class="input-container">
         <div class="input-wrapper">
-          <textarea class="message-input" placeholder="Send a message..." rows="1"></textarea>
-          <button class="send-button">
+            <label>
+                <textarea class="message-input" placeholder="Send a message..." rows="1"></textarea>
+            </label>
+            <button class="send-button">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path>
             </svg>
           </button>
         </div>
@@ -67,43 +69,48 @@
 
     sendButton.addEventListener('click', sendMessage);
 
-    function sendMessage() {
-      const message = messageInput.value.trim();
-      if (!message) return;
+    // Add this to your existing script section to handle the selectors
+const examBoardSelector = document.querySelector('.exam-board-selector');
+const subjectSelector = document.querySelector('.subject-selector');
 
-      if (welcomeScreen) {
-        welcomeScreen.style.display = 'none';
+// Update the sendMessage function to use the selected values
+function sendMessage() {
+  const message = messageInput.value.trim();
+  if (!message) return;
+
+  if (welcomeScreen) {
+    welcomeScreen.style.display = 'none';
+  }
+
+  addMessage(message, 'user');
+
+  messageInput.value = '';
+  messageInput.style.height = 'auto';
+  sendButton.disabled = true;
+
+  fetch("http://localhost:8000/ask", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      subject: subjectSelector.value,
+      exam_board: examBoardSelector.value,
+      question: message
+    })
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (data.answer) {
+        addMessage(data.answer, 'bot');
+      } else {
+        addMessage("⚠️ Error: " + (data.error || "No response."), 'bot');
       }
-
-      addMessage(message, 'user');
-
-      messageInput.value = '';
-      messageInput.style.height = 'auto';
-      sendButton.disabled = true;
-
-      fetch("http://localhost:8000/ask", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          subject: "Computer Science",
-          exam_board: "AQA",
-          question: message
-        })
-      })
-        .then(res => res.json())
-        .then(data => {
-          if (data.answer) {
-            addMessage(data.answer, 'bot');
-          } else {
-            addMessage("⚠️ Error: " + (data.error || "No response."), 'bot');
-          }
-        })
-        .catch(err => {
-          addMessage("⚠️ Network error: " + err.message, 'bot');
-        });
-    }
+    })
+    .catch(err => {
+      addMessage("⚠️ Network error: " + err.message, 'bot');
+    });
+}
 
     function addMessage(text, sender) {
       const messageDiv = document.createElement('div');
