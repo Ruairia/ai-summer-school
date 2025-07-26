@@ -67,80 +67,158 @@
   </div>
 
   <script>
-    const messageInput = document.querySelector('.message-input');
-    const sendButton = document.querySelector('.send-button');
-    const chatMessages = document.querySelector('.chat-messages');
-    const welcomeScreen = document.querySelector('.welcome-screen');
-
-    messageInput.addEventListener('input', function () {
-      this.style.height = 'auto';
-      this.style.height = Math.min(this.scrollHeight, 120) + 'px';
-      sendButton.disabled = !this.value.trim();
-    });
-
-    messageInput.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        const examBoardSelector = document.querySelector('.exam-board-selector');
+    // Add this right after your existing variable declarations at the top of your script section
+const messageInput = document.querySelector('.message-input');
+const sendButton = document.querySelector('.send-button');
+const chatMessages = document.querySelector('.chat-messages');
+const welcomeScreen = document.querySelector('.welcome-screen');
+const examBoardSelector = document.querySelector('.exam-board-selector');
 const subjectSelector = document.querySelector('.subject-selector');
+const newChatButton = document.querySelector('.new-chat-btn');
 
+// Chat state management
+let chats = [{
+    id: 'getting-started',
+    title: '✨ Getting Started',
+    messages: []
+}];
+let currentChatId = 'getting-started';
+
+// Event Listeners - add these after the variable declarations
+messageInput.addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    sendButton.disabled = !this.value.trim();
+});
+
+messageInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
         sendMessage();
-      }
-    });
-
-    sendButton.addEventListener('click', sendMessage);
-
-    function sendMessage() {
-      const message = messageInput.value.trim();
-      if (!message) return;
-
-      if (welcomeScreen) {
-        welcomeScreen.style.display = 'none';
-      }
-
-      addMessage(message, 'user');
-
-      messageInput.value = '';
-      messageInput.style.height = 'auto';
-      sendButton.disabled = true;
-
-      fetch("http://localhost:8000/ask", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json"
-  },
-  body: JSON.stringify({
-    subject: subjectSelector.value,
-    exam_board: examBoardSelector.value,
-    question: message
-  })
-})
-
-        .then(res => res.json())
-        .then(data => {
-          if (data.answer) {
-            addMessage(data.answer, 'bot');
-          } else {
-            addMessage("⚠️ Error: " + (data.error || "No response."), 'bot');
-          }
-        })
-        .catch(err => {
-          addMessage("⚠️ Network error: " + err.message, 'bot');
-        });
     }
+});
 
-    function addMessage(text, sender) {
-      const messageDiv = document.createElement('div');
-      messageDiv.className = `message ${sender}-message`;
-      messageDiv.innerHTML = `
+sendButton.addEventListener('click', sendMessage);
+newChatButton.addEventListener('click', createNewChat);
+
+// Chat management functions
+function createNewChat() {
+    const chatId = 'chat-' + Date.now();
+    const newChat = {
+        id: chatId,
+        title: 'New Chat',
+        messages: []
+    };
+    chats.push(newChat);
+    currentChatId = chatId;
+    updateChatHistory();
+    clearChat();
+}
+
+function updateChatHistory() {
+    const chatHistory = document.querySelector('.chat-history');
+    chatHistory.innerHTML = '';
+
+    chats.forEach(chat => {
+        const chatElement = document.createElement('div');
+        chatElement.className = `chat-item ${chat.id === currentChatId ? 'active' : ''}`;
+        chatElement.textContent = chat.title;
+        chatElement.onclick = () => switchChat(chat.id);
+        chatHistory.appendChild(chatElement);
+    });
+}
+
+function switchChat(chatId) {
+    currentChatId = chatId;
+    updateChatHistory();
+    displayChat(chatId);
+}
+
+function clearChat() {
+    chatMessages.innerHTML = `
+        <div class="welcome-screen">
+            <h1 class="welcome-title">How can I help you today?</h1>
+            <p class="welcome-subtitle">Ask me anything, and I'll do my best to assist you</p>
+        </div>
+    `;
+}
+
+function displayChat(chatId) {
+    const chat = chats.find(c => c.id === chatId);
+    if (!chat) return;
+
+    chatMessages.innerHTML = '';
+    chat.messages.forEach(msg => {
+        addMessage(msg.text, msg.sender, false);
+    });
+}
+
+function addMessage(text, sender, save = true) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${sender}-message`;
+    messageDiv.innerHTML = `
         <div class="message-avatar">${sender === 'user' ? 'U' : 'AI'}</div>
         <div class="message-content">
-          <div class="message-text">${text}</div>
+            <div class="message-text">${text}</div>
         </div>
-      `;
-      chatMessages.appendChild(messageDiv);
-      chatMessages.scrollTop = chatMessages.scrollHeight;
+    `;
+    chatMessages.appendChild(messageDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+
+    if (save) {
+        const currentChat = chats.find(c => c.id === currentChatId);
+        if (currentChat) {
+            currentChat.messages.push({ text, sender });
+            if (currentChat.messages.length === 2) {
+                // Update chat title after first exchange
+                currentChat.title = text.slice(0, 30) + (text.length > 30 ? '...' : '');
+                updateChatHistory();
+            }
+        }
     }
+}
+
+function sendMessage() {
+    const message = messageInput.value.trim();
+    if (!message) return;
+
+    if (welcomeScreen) {
+        welcomeScreen.style.display = 'none';
+    }
+
+    addMessage(message, 'user');
+
+    messageInput.value = '';
+    messageInput.style.height = 'auto';
+    sendButton.disabled = true;
+
+    fetch("http://localhost:8000/ask", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            subject: subjectSelector.value,
+            exam_board: examBoardSelector.value,
+            question: message
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.answer) {
+            addMessage(data.answer, 'bot');
+        } else {
+            addMessage("⚠️ Error: " + (data.error || "No response."), 'bot');
+        }
+    })
+    .catch(err => {
+        addMessage("⚠️ Network error: " + err.message, 'bot');
+    });
+}
+
+// Initialize chat history when the page loads
+updateChatHistory();
+
   </script>
 </body>
 </html>
