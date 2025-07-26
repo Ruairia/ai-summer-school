@@ -25,8 +25,26 @@
     <!-- Main Content -->
     <div class="main-content">
       <div class="chat-header">
-        <div class="model-selector">ChatGPT 4.0 ▼</div>
-      </div>
+  <div class="selectors-container">
+      <label>
+          <select class="exam-board-selector">
+            <option value="AQA">AQA</option>
+            <option value="OCR">OCR</option>
+            <option value="EDEXCEL">EDEXCEL</option>
+          </select>
+      </label>
+      <label>
+          <select class="subject-selector">
+          <option value="Computer Science">Computer Science</option>
+          <option value="Maths">Maths</option>
+          <option value="English Literature">English Literature</option>
+          <option value="English Language">English Language</option>
+          <option value="Geography">Geography</option>
+        </select>
+      </label>
+  </div>
+</div>
+
       <div class="chat-messages">
         <div class="welcome-screen">
           <h1 class="welcome-title">How can I help you today?</h1>
@@ -63,54 +81,53 @@
     messageInput.addEventListener('keydown', function (e) {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
+        const examBoardSelector = document.querySelector('.exam-board-selector');
+const subjectSelector = document.querySelector('.subject-selector');
+
         sendMessage();
       }
     });
 
     sendButton.addEventListener('click', sendMessage);
 
-    // Add this to your existing script section to handle the selectors
-const examBoardSelector = document.querySelector('.exam-board-selector');
-const subjectSelector = document.querySelector('.subject-selector');
+    function sendMessage() {
+      const message = messageInput.value.trim();
+      if (!message) return;
 
-// Update the sendMessage function to use the selected values
-function sendMessage() {
-  const message = messageInput.value.trim();
-  if (!message) return;
-
-  if (welcomeScreen) {
-    welcomeScreen.style.display = 'none';
-  }
-
-  addMessage(message, 'user');
-
-  messageInput.value = '';
-  messageInput.style.height = 'auto';
-  sendButton.disabled = true;
-
-  fetch("http://localhost:8000/ask", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      subject: subjectSelector.value,
-      exam_board: examBoardSelector.value,
-      question: message
-    })
-  })
-    .then(res => res.json())
-    .then(data => {
-      if (data.answer) {
-        addMessage(data.answer, 'bot');
-      } else {
-        addMessage("⚠️ Error: " + (data.error || "No response."), 'bot');
+      if (welcomeScreen) {
+        welcomeScreen.style.display = 'none';
       }
-    })
-    .catch(err => {
-      addMessage("⚠️ Network error: " + err.message, 'bot');
-    });
-}
+
+      addMessage(message, 'user');
+
+      messageInput.value = '';
+      messageInput.style.height = 'auto';
+      sendButton.disabled = true;
+
+      fetch("http://localhost:8000/ask", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    subject: subjectSelector.value,
+    exam_board: examBoardSelector.value,
+    question: message
+  })
+})
+
+        .then(res => res.json())
+        .then(data => {
+          if (data.answer) {
+            addMessage(data.answer, 'bot');
+          } else {
+            addMessage("⚠️ Error: " + (data.error || "No response."), 'bot');
+          }
+        })
+        .catch(err => {
+          addMessage("⚠️ Network error: " + err.message, 'bot');
+        });
+    }
 
     function addMessage(text, sender) {
       const messageDiv = document.createElement('div');

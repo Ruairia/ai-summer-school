@@ -331,3 +331,31 @@ body {
 ::-webkit-scrollbar-thumb:hover {
     background: #9d7fa7;
 }
+
+.selectors-container {
+    display: flex;
+    gap: 12px;
+}
+
+.exam-board-selector,
+.subject-selector {
+    background-color: #1a1a2e;
+    border: 1px solid #836d8d;
+    color: #ffffff;
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+.exam-board-selector:hover,
+.subject-selector:hover {
+    background-color: #836d8d;
+}
+
+.exam-board-selector option,
+.subject-selector option {
+    background-color: #1a1a2e;
+    color: #ffffff;
+}
