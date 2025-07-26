@@ -192,7 +192,7 @@ function sendMessage() {
     messageInput.style.height = 'auto';
     sendButton.disabled = true;
 
-    fetch("http://localhost:8000/ask", {
+    fetch("http://localhost:5000/ask", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"

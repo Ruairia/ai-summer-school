@@ -1,8 +1,8 @@
 import os
-import requests
+from dotenv import load_dotenv
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from dotenv import load_dotenv
+from huggingface_hub import InferenceClient
 
 load_dotenv()
 HF_API_KEY = os.getenv("HUGGINGFACE_API_KEY")
@@ -10,13 +10,9 @@ HF_API_KEY = os.getenv("HUGGINGFACE_API_KEY")
 app = Flask(__name__)
 CORS(app)
 
-MODEL_URL = "https://api-inference.huggingface.co/models/gpt2"
-
-
-headers = {
-    "Authorization": f"Bearer {HF_API_KEY}",
-    "Content-Type": "application/json"
-}
+# Initialize the Hugging Face client
+client = InferenceClient(token=HF_API_KEY)
+MODEL_ID = "deepseek-ai/DeepSeek-V3-0324"
 
 @app.route("/ask", methods=["POST"])
 def ask():
@@ -28,27 +24,27 @@ def ask():
     if not all([subject, exam_board, question]):
         return jsonify({"error": "Missing subject, exam_board, or question"}), 400
 
-    prompt = (
-        f"You are an expert tutor. The student is studying {subject} for the {exam_board} A-level. "
-        f"Answer clearly and concisely according to this curriculum.\n\n"
-        f"Student: {question}"
-    )
+    system_prompt = f"You are an expert tutor. The student is studying {subject} for the {exam_board} A-level. Answer clearly and concisely according to this curriculum. Do not include excessive formatting - try to use only ascii characters, do not use tables or double asterisks."
 
     try:
-        response = requests.post(
-            MODEL_URL,
-            headers=headers,
-            json={"inputs": prompt}
+        # Use the chat completion endpoint instead of text generation
+        response = client.chat_completion(
+            model=MODEL_ID,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": question}
+            ],
+            temperature=0.7,
+            max_tokens=500
         )
-
-        if response.status_code != 200:
-            return jsonify({"error": f"Hugging Face error: {response.text}"}), response.status_code
-
-        output = response.json()
-        if isinstance(output, list) and "generated_text" in output[0]:
-            return jsonify({"answer": output[0]["generated_text"]})
+        
+        # Extract the assistant's response from the chat completion
+        if hasattr(response, 'choices') and len(response.choices) > 0:
+            answer = response.choices[0].message.content
         else:
-            return jsonify({"error": "Unexpected response format", "raw": output}), 500
+            answer = response.generated_text
+
+        return jsonify({"answer": answer})
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -58,4 +54,4 @@ def home():
     return "Flask server with Hugging Face model running. POST to /ask."
 
 if __name__ == "__main__":
-    app.run(debug=True, port=8000)
+    app.run(debug=True, port=5000)
