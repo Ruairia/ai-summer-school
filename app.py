@@ -24,7 +24,10 @@ def ask():
     if not all([subject, exam_board, question]):
         return jsonify({"error": "Missing subject, exam_board, or question"}), 400
 
-    system_prompt = f"You are an expert tutor. The student is studying {subject} for the {exam_board} A-level. Answer clearly and concisely according to this curriculum. Do not include excessive formatting - try to use only ascii characters, do not use tables or double asterisks."
+    system_prompt = (f"You are an expert tutor. The student is studying {subject} for the {exam_board} A-level. Answer "
+                     f"clearly and concisely according to this curriculum. Do not include excessive formatting - try "
+                     f"to use only ascii characters, do not use tables or double asterisks."
+                     f"Try your best to stay fully inside the scope of the specification - double check.")
 
     try:
         # Use the chat completion endpoint instead of text generation
